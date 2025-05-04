@@ -31,5 +31,5 @@ Thumbs.db
 *.bak
 *.tmp
 
-profile.js
-user.js
+connectionRequest.js
+request.js
