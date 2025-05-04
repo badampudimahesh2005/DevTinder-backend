@@ -30,6 +30,3 @@ Thumbs.db
 # Miscellaneous
 *.bak
 *.tmp
-
-connectionRequest.js
-request.js
