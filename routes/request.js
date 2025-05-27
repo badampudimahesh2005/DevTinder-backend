@@ -123,4 +123,34 @@ requestRouter.post("/request/review/:status/:requestId", userAuth, async (req, r
     }
 });
 
+// requestRouter.delete("/request/cancel/:toUserId", userAuth, async (req, res) => {
+//     try {
+//         // const loggedInUser = req.user;
+//         const { toUserId } = req.params;
+//         const fromUserId = req.user._id;
+
+//         const existingConnectionRequest = await ConnectionRequest.findOne({
+//             $or: [
+//                 { fromUserId, toUserId },
+//                 { fromUserId: toUserId, toUserId: fromUserId },
+//             ]
+//         })
+
+//         if (!existingConnectionRequest) {
+//             return res.status(404).json({
+//                 message: "Connection request not found",
+//             })
+//         }
+
+//         await existingConnectionRequest.deleteOne();
+//         res.json({
+//             message: "Connection request cancelled successfully",
+//         })
+//     }
+//     catch (err) {
+//         res.status(500).json({
+//             message: "Internal Server Error" + err.message,
+//         });
+//     }
+// });
 module.exports = requestRouter;

@@ -2,7 +2,8 @@ const express = require("express");
 const { validateSignupData } = require("../utils/validation");
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
-
+// const { welcomeEmail } = require("../utils/sendEmail");
+// const passport = require("passport");
 const authRouter = express.Router();
 
 authRouter.post("/signup", async (req, res) => {
@@ -60,7 +61,13 @@ authRouter.post("/signup", async (req, res) => {
 
 authRouter.post("/login", async (req, res) => {
     try {
+
+
         const { email, password } = req.body;
+
+        if (!email || !password) {
+            throw new Error("Email and password are required");
+        }
 
         const user = await User.findOne({ email: email });
         if (!user) {
