@@ -183,6 +183,9 @@ const userSchema = new mongoose.Schema(
     workExperience: {
       type: String,
     },
+    publicId:{
+      type: String,
+    },
     
     // resetPasswordToken: String,
     // resetPasswordExpires: Date,

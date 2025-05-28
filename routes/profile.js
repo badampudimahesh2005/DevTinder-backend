@@ -1,6 +1,9 @@
 const express = require('express');
 const { validateEditProfileData } = require('../utils/validation');
 const { userAuth } = require('../middlewares/auth');
+const formidable = require('formidable');
+const User = require('../models/user');
+const cloudinary = require('../config/cloudinary');
 
 const profileRouter = express.Router();
 
@@ -29,6 +32,60 @@ profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
         res.status(500).send("Something went wrong: " + err.message);
     }
 });
+
+
+profileRouter.post("/profile/upload-profile", userAuth, async (req, res) => {
+  try {
+    const user =await  User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Use formidable to handle file uploads
+    //1.check if the user has profile image already
+    //2.if user has profile image then delete the old image from cloudinary
+    //3.orElse add the new image to cloudinary
+
+    const form = formidable({});
+     form.parse(req, async (err, fields, files) => {
+      if (err) {
+        return res.status(500).json({ message: "Error parsing the file" });
+      }
+
+      if (files.picture) {
+        if (user.publicId) {
+          await cloudinary.uploader.destroy(user.publicId, (err, result) => {
+            console.log({ result, err });
+          });
+        }
+
+        const uploadedImage = await cloudinary.uploader.upload(
+          files.picture.filepath,
+          { folder: "DevTinder/profiles" }
+        );
+
+        if (!uploadedImage) {
+          return res.status(400).json({ message: "Error in uploading image" });
+        }
+
+        await User.findByIdAndUpdate(
+          req.user._id,
+          {
+            publicId: uploadedImage.public_id,
+            profilePicture: uploadedImage.secure_url,
+          },
+          { new: true }
+        );
+    }
+    res.status(201).json({message: "Profile picture updated"});
+    });
+  } catch (err) {
+    res.status(500).send("Something went wrong: " + err.message);
+  }
+});
+
+
+
 
 // profileRouter.patch("/profile/edit/password", userAuth, async (req, res) => {
 //     try {
