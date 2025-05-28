@@ -84,7 +84,34 @@ profileRouter.post("/profile/upload-profile", userAuth, async (req, res) => {
   }
 });
 
+profileRouter.delete("/profile/remove-profile", userAuth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
 
+        if (user.publicId) {
+            await cloudinary.uploader.destroy(user.publicId, (err, result) => {
+                console.log({ result, err });
+            });
+        }
+        const defaultProfilePic =
+      "https://t3.ftcdn.net/jpg/06/33/54/78/360_F_633547842_AugYzexTpMJ9z1YcpTKUBoqBF0CUCk10.jpg";
+        await User.findByIdAndUpdate(
+            req.user._id,
+            {
+                publicId: null,
+                profilePicture: defaultProfilePic,
+            },
+            { new: true }
+        );
+        res.status(200).json({ message: "Profile picture removed successfully" });
+
+    }catch (err) {
+        res.status(500).send("Something went wrong: " + err.message);
+    }
+});
 
 
 // profileRouter.patch("/profile/edit/password", userAuth, async (req, res) => {
