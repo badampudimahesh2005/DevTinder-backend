@@ -36,7 +36,7 @@ profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
 
 profileRouter.post("/profile/upload-profile", userAuth, async (req, res) => {
   try {
-    const user =await  User.findById(req.user._id);
+    const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -47,18 +47,22 @@ profileRouter.post("/profile/upload-profile", userAuth, async (req, res) => {
     //3.orElse add the new image to cloudinary
 
     const form = formidable({});
-     form.parse(req, async (err, fields, files) => {
+    form.parse(req, async (err, fields, files) => {
       if (err) {
         return res.status(500).json({ message: "Error parsing the file" });
       }
 
       if (files.picture) {
+        // Delete old image if exists
         if (user.publicId) {
-          await cloudinary.uploader.destroy(user.publicId, (err, result) => {
-            console.log({ result, err });
-          });
+          try {
+            await cloudinary.uploader.destroy(user.publicId);
+          } catch (destroyErr) {
+            console.warn("Failed to delete old image:", destroyErr);
+          }
         }
 
+        // Upload new image
         const uploadedImage = await cloudinary.uploader.upload(
           files.picture.filepath,
           { folder: "DevTinder/profiles" }
@@ -68,7 +72,8 @@ profileRouter.post("/profile/upload-profile", userAuth, async (req, res) => {
           return res.status(400).json({ message: "Error in uploading image" });
         }
 
-        await User.findByIdAndUpdate(
+        // Update user with new image
+        const updatedUser = await User.findByIdAndUpdate(
           req.user._id,
           {
             publicId: uploadedImage.public_id,
@@ -76,8 +81,18 @@ profileRouter.post("/profile/upload-profile", userAuth, async (req, res) => {
           },
           { new: true }
         );
-    }
-    res.status(201).json({message: "Profile picture updated"});
+
+        // Send back the updated user or just the new image URL
+        return res.status(201).json({
+          message: "Profile picture updated",
+          user: {
+            profilePicture: updatedUser.profilePicture,
+            publicId: updatedUser.publicId,
+          },
+        });
+      } else {
+        return res.status(400).json({ message: "No picture file uploaded" });
+      }
     });
   } catch (err) {
     res.status(500).send("Something went wrong: " + err.message);
